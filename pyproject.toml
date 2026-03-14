@@ -1,0 +1,30 @@
+[project]
+name = "sky-kit"
+version = "0.1.0"
+description = "AI Robot initialization and deployment toolkit"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "click>=8.0.0",
+    "rich>=13.0.0",
+    "pyyaml>=6.0",
+    "python-dotenv>=1.0.0",
+]
+
+[project.scripts]
+sky-kit = "cli.main:cli"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--tb=short -v"
+
+[tool.coverage.run]
+source = ["cli"]
+omit = ["cli/__pycache__/*", "cli/template/*"]
+
+[tool.coverage.report]
+show_missing = true
