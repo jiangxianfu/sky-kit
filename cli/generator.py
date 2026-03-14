@@ -46,6 +46,8 @@ class ProjectGenerator:
 
         # -- templates (static or lightly substituted) --
         self._write("start.py",               _fill(_tpl("start.py"), name=self.name))
+        self._write("service.py",             _fill(_tpl("service.py"), name=self.name))
+        self._write("cli.py",                 _fill(_tpl("cli.py"), name=self.name))
         self._write(".gitignore",             _tpl(".gitignore"))
         self._write("core/__init__.py",       "")
         self._write("core/config.py",         _tpl("core/config.py"))
@@ -69,6 +71,7 @@ class ProjectGenerator:
 
         # -- dynamic (depend on config values) --
         self._write(".meta/memory/.gitkeep", "")
+        self._write("web/index.html",         _fill(_tpl("web/index.html"), name=self.name))
         self._write("pyproject.toml",        self._pyproject_toml())
         self._write(".env",                  self._env_file())
         self._write("config/config.yaml",    self._config_yaml())
@@ -77,7 +80,7 @@ class ProjectGenerator:
     # -- internals -------------------------------------------------------------
 
     def _mkdirs(self):
-        for d in ["config", ".meta/memory", "core", "skills"]:
+        for d in ["config", ".meta/memory", "core", "skills", "web"]:
             (self.root / d).mkdir(parents=True, exist_ok=True)
         if self.config.get("enable_mcp"):
             (self.root / "mcp").mkdir(parents=True, exist_ok=True)
@@ -107,6 +110,9 @@ class ProjectGenerator:
             '    "rich>=13.0.0"',
             '    "pyyaml>=6.0"',
             '    "python-dotenv>=1.0.0"',
+            '    "fastapi>=0.110.0"',
+            '    "uvicorn[standard]>=0.27.0"',
+            '    "httpx>=0.27.0"',
         ]
         if self.config.get("enable_mcp"):
             deps.append('    "mcp>=0.9.0"')
@@ -221,7 +227,7 @@ class ProjectGenerator:
         lines = [
             f"# {name} — AI Robot",
             "",
-            f"一个基于 [sky-kit](https://github.com/sky-kit) 构建的 AI 机器人，支持工具调用、持久化记忆、动态技能扩展。",
+            f"一个基于 [sky-kit](https://github.com/sky-kit) 构建的 AI 机器人，支持工具调用、持久化记忆、动态技能扩展、后台服务与 Web UI。",
             "",
             "## 快速开始",
             "",
@@ -229,9 +235,30 @@ class ProjectGenerator:
             "# 安装依赖",
             "uv sync",
             "",
-            "# 启动",
+            "# 启动（交互式菜单）",
             "uv run start.py",
             "```",
+            "",
+            "## 启动模式",
+            "",
+            "| 模式 | 命令 | 说明 |",
+            "|------|------|------|",
+            "| service | `python start.py service` | 启动后台服务（API + Web UI） |",
+            "| cli | `python start.py cli` | 命令行客户端（连接后台服务） |",
+            "| chat | `python start.py chat` | 本地直接聊天（无需服务） |",
+            "",
+            "### 后台服务（service 模式）",
+            "",
+            "```bash",
+            "python start.py service          # 前台运行",
+            "python start.py service --daemon # 守护进程（Linux/macOS）",
+            "python start.py service --stop   # 停止服务",
+            "python start.py service --status # 查看状态",
+            "```",
+            "",
+            "服务启动后访问：",
+            f"- Web UI：`http://localhost:8765/`",
+            f"- API 文档：`http://localhost:8765/docs`",
             "",
             "## 配置",
             "",
@@ -252,7 +279,7 @@ class ProjectGenerator:
             "GITHUB_TOKEN=your_token_here      # github-copilot",
             "```",
             "",
-            "## 聊天命令",
+            "## chat 模式命令",
             "",
             "| 命令 | 说明 |",
             "|------|------|",
@@ -263,6 +290,16 @@ class ProjectGenerator:
             "| `/clear` | 清空当前对话 |",
             "| `/save` | 立即保存对话 |",
             "| `/quit` | 退出 |",
+            "",
+            "## cli 模式命令",
+            "",
+            "| 命令 | 说明 |",
+            "|------|------|",
+            "| `/status` | 查看服务状态 |",
+            "| `/session` | 显示当前会话 ID |",
+            "| `/clear` | 清除会话，开始新对话 |",
+            "| `/memory` | 查看记忆摘要 |",
+            "| `/quit` | 退出客户端（服务继续运行） |",
             "",
             "## 技能（Skills）",
             "",
@@ -293,7 +330,10 @@ class ProjectGenerator:
             "",
             "```",
             f"{name}/",
-            "├── start.py",
+            "├── start.py        # 统一启动入口",
+            "├── service.py      # 后台服务（FastAPI）",
+            "├── cli.py          # CLI 客户端",
+            "├── web/            # Web UI",
             "├── config/config.yaml",
             "├── .meta/",
             "│   ├── soul.md",

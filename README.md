@@ -2,7 +2,7 @@
 
 > AI 机器人项目初始化工具 — 基于 Python 构建。
 
-一条命令，创建一个完整的、可交互的 AI 机器人项目。
+一条命令，创建一个完整的可交互 AI 机器人项目，内置后台服务、Web UI 和命令行客户端。
 
 ---
 
@@ -65,7 +65,176 @@ uv run start.py
 1. **AI 提供商** — 选择 OpenAI / Claude / GitHub Copilot，并输入模型名称与 Base URL
 2. **API Key** — 输入对应的 API 密钥
 
-技能、MCP、调度器等功能均以默认配置自动生成，无需手动配置。
+技能、MCP 等功能均以默认配置自动生成，无需手动配置。
+
+---
+
+## 生成的项目结构
+
+```
+sky001/
+├── start.py              ← 统一启动入口（service / cli / chat 三种模式）
+├── service.py            ← 后台服务（FastAPI + Web UI）
+├── cli.py                ← 命令行客户端（连接后台服务）
+├── web/                  ← Web UI（暗色主题，支持 Markdown 渲染）
+├── .meta/                ← 灵魂、记忆与身份（隐藏目录）
+│   ├── soul.md           ← 机器人身份文件（运行时自动创建并持续进化）
+│   └── memory/           ← 对话记忆，按 yyyy-MM-dd/[主题].md 存储
+├── .env                  ← API 密钥（已加入 .gitignore）
+├── config/
+│   └── config.yaml       ← 全部配置项
+├── skills/               ← 技能插件目录
+│   ├── base_skill.py
+│   ├── file_manager.py
+│   ├── code_executor.py
+│   └── web_search.py
+└── core/                 ← 机器人核心框架
+    ├── bot.py
+    ├── config.py
+    ├── ai_client.py
+    ├── memory_manager.py
+    └── skill_manager.py
+```
+
+---
+
+## 启动模式
+
+生成的项目支持三种启动方式：
+
+| 模式 | 命令 | 说明 |
+|------|------|------|
+| **service** | `python start.py service` | 启动后台服务（FastAPI + Web UI） |
+| **cli** | `python start.py cli` | 命令行客户端（连接后台服务，支持流式输出） |
+| **chat** | `python start.py chat` | 本地直接聊天（无需后台服务） |
+
+直接运行 `python start.py` 将显示交互式菜单。
+
+### 后台服务（service 模式）
+
+```bash
+python start.py service          # 前台运行（Ctrl+C 停止）
+python start.py service --daemon # 守护进程（Linux/macOS）
+python start.py service --stop   # 停止服务
+python start.py service --status # 查看状态
+```
+
+服务启动后可访问：
+- **Web UI**：`http://localhost:8765/`（暗色主题聊天界面）
+- **API 文档**：`http://localhost:8765/docs`（FastAPI 自动生成）
+
+---
+
+## 首次运行
+
+首次执行 `python start.py` 时，如果 `.meta/soul.md` 不存在，机器人会自动询问：
+
+1. **你想叫我什么名字？** — 设置机器人名称
+2. **你希望我是一个怎样的伙伴？** — 设置性格与定位
+3. **有哪些专注领域？** — 例如：编程、写作、研究
+
+回答将保存到 `.meta/soul.md`，并作为 AI 系统提示词持续使用和进化。
+
+---
+
+## chat 模式内置命令
+
+| 命令 | 说明 |
+|------|------|
+| `/memory` | 显示近期记忆摘要 |
+| `/skills` | 列出已激活的技能 |
+| `/about` | 显示 `.meta/soul.md` 内容 |
+| `/search <关键词>` | 搜索历史对话记忆 |
+| `/clear` | 清空当前对话 |
+| `/save` | 立即保存当前对话到记忆 |
+| `/quit` | 退出 |
+
+## cli 模式命令
+
+| 命令 | 说明 |
+|------|------|
+| `/status` | 查看服务状态 |
+| `/session` | 显示当前会话 ID |
+| `/clear` | 清除会话，开始新对话 |
+| `/memory` | 查看记忆摘要 |
+| `/quit` | 退出客户端（后台服务继续运行） |
+
+---
+
+## 支持的 AI 提供商
+
+| 提供商 | SDK | 说明 |
+|--------|-----|------|
+| **OpenAI** | `openai` | gpt-4o、gpt-4o-mini、o3-mini 等 |
+| **Anthropic Claude** | `anthropic` | claude-3-5-sonnet、claude-3-haiku 等 |
+| **GitHub Copilot** | `openai` | 使用 GitHub Models API（`https://models.inference.ai.azure.com`），需要 GitHub PAT |
+
+---
+
+## MCP 工具服务器
+
+在 `config/config.yaml` 中启用 MCP，可为机器人接入外部工具：
+
+- **filesystem** — 通过 `@modelcontextprotocol/server-filesystem` 读写本地文件
+- **brave-search** — 通过 `@modelcontextprotocol/server-brave-search` 进行网页搜索
+- **github** — 通过 `@modelcontextprotocol/server-github` 访问 GitHub API
+- **sqlite** — 通过 `@modelcontextprotocol/server-sqlite` 操作本地数据库
+
+需要安装 Node.js（`npx`）并执行 `pip install mcp`。
+
+---
+
+## 自定义
+
+### 修改机器人性格
+
+编辑项目中的 `.meta/soul.md`。机器人也会随着对话自动更新该文件，持续进化。
+
+### 添加自定义技能
+
+在 `skills/` 目录下新建 `my_skill.py`，继承 `BaseSkill`：
+
+```python
+from skills.base_skill import BaseSkill
+
+class MySkill(BaseSkill):
+    name = 'my_skill'
+    description = '这个技能做一些有用的事情。'
+
+    def execute(self, **kwargs):
+        return '来自自定义技能的问候！'
+```
+
+然后在 `config/config.yaml` 的 `skills.enabled` 中添加 `my_skill`。
+
+### 切换 AI 模型
+
+编辑 `config/config.yaml`：
+
+```yaml
+ai:
+  provider: claude
+  model: claude-3-5-sonnet-20241022
+```
+
+---
+
+## 记忆系统
+
+每次对话结束后自动保存至 `.meta/memory/<日期>/<主题>.md`，以 Markdown 格式存储。
+
+使用 `/search <关键词>` 可跨历史会话全文搜索。
+
+---
+
+## 环境要求
+
+- Python ≥ 3.12
+- `click`、`rich`、`pyyaml`、`python-dotenv`
+- `openai`（用于 OpenAI / GitHub Copilot）
+- `anthropic`（用于 Claude）
+- `fastapi`、`uvicorn`、`httpx`（后台服务与 CLI 客户端）
+
 
 ---
 

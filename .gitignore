@@ -11,4 +11,4 @@ build/
 .env.*
 .idea/
 .vscode/
-sample/
+sample*/

@@ -240,6 +240,57 @@ _Updated automatically as {name} grows._
 
         console.print('[yellow]⚠ 已达到工具调用上限。[/yellow]')
 
+    async def _agentic_turn_api(self, user_input: str):
+        """Non-streaming turn for service.py API endpoint."""
+        self.messages.append({'role': 'user', 'content': user_input})
+        tools = self.skills.get_tool_definitions()
+        max_iterations = 10
+        for _ in range(max_iterations):
+            assistant_msg, tool_calls = self.ai.chat_with_tools(
+                messages=self.messages,
+                system_prompt=self.system_prompt,
+                tools=tools,
+            )
+            self.messages.append(assistant_msg)
+            if tool_calls is None:
+                return
+            for call in tool_calls:
+                result = self.skills.execute(call['name'], **call['arguments'])
+                self.messages.append({
+                    'role': 'tool',
+                    'tool_call_id': call['id'],
+                    'content': str(result),
+                })
+
+    async def _agentic_turn_stream(self, user_input: str):
+        """Streaming turn for service.py SSE endpoint (async generator)."""
+        self.messages.append({'role': 'user', 'content': user_input})
+        tools = self.skills.get_tool_definitions()
+        max_iterations = 10
+        for _ in range(max_iterations):
+            assistant_msg, tool_calls = self.ai.chat_with_tools(
+                messages=self.messages,
+                system_prompt=self.system_prompt,
+                tools=tools,
+            )
+            self.messages.append(assistant_msg)
+            if tool_calls is None:
+                text = assistant_msg.get('content', '')
+                if text:
+                    words = text.split(' ')
+                    for i, word in enumerate(words):
+                        yield word + (' ' if i < len(words) - 1 else '')
+                        await asyncio.sleep(0.01)
+                return
+            for call in tool_calls:
+                yield f'\n> 🔧 调用工具: {call["name"]}\n'
+                result = self.skills.execute(call['name'], **call['arguments'])
+                self.messages.append({
+                    'role': 'tool',
+                    'tool_call_id': call['id'],
+                    'content': str(result),
+                })
+
     # ── command handler ─────────────────────────────────────────────────────
 
     async def _handle_command(self, raw: str) -> bool:

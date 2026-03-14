@@ -246,7 +246,7 @@ class TestWizard:
     def test_interactive_provider_choice_2(self):
         """Interactive mode: user picks choice '2' (claude)."""
         with patch("cli.main.Prompt.ask") as mock_prompt:
-            mock_prompt.side_effect = ["2", "claude-3-5-haiku-20241022", "sk-ant"]
+            mock_prompt.side_effect = ["2", "claude-3-5-haiku-20241022", "", "sk-ant"]
             with patch("cli.main.console"):
                 config = _wizard("bot", None, None)
         assert config["model_provider"] == "claude"
@@ -254,7 +254,7 @@ class TestWizard:
     def test_interactive_provider_choice_3(self):
         """Interactive mode: user picks choice '3' (github-copilot)."""
         with patch("cli.main.Prompt.ask") as mock_prompt:
-            mock_prompt.side_effect = ["3", "gpt-4o", "ghp_tok"]
+            mock_prompt.side_effect = ["3", "gpt-4o", "https://models.inference.ai.azure.com", "ghp_tok"]
             with patch("cli.main.console"):
                 config = _wizard("bot", None, None)
         assert config["model_provider"] == "github-copilot"
