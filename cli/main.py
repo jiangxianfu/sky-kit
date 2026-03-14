@@ -25,7 +25,7 @@ def cli():
         sky-kit init sky001
         cd sky001
         uv sync
-        python start.py
+        uv run start.py
     """
     pass
 
@@ -72,7 +72,7 @@ def init(name, model, api_key):
     console.print("[bold]Next steps:[/bold]")
     console.print(f"  [cyan]cd {name}[/cyan]")
     console.print(f"  [cyan]uv sync[/cyan]")
-    console.print(f"  [cyan]python start.py[/cyan]")
+    console.print(f"  [cyan]uv run start.py[/cyan]")
     console.print()
     console.print("[dim]Your robot will introduce itself on first run. 🤖[/dim]")
 
@@ -124,13 +124,15 @@ def _wizard(name: str, preset_model, preset_api_key) -> dict:
         default=model_defaults[config["model_provider"]],
     )
 
-    if config["model_provider"] == "github-copilot":
-        config["base_url"] = "https://models.inference.ai.azure.com"
-    elif config["model_provider"] == "openai":
-        config["base_url"] = Prompt.ask(
-            "[green]Custom API base URL (leave blank for default)[/green]",
-            default="",
-        )
+    base_url_defaults = {
+        "openai": "",
+        "claude": "",
+        "github-copilot": "https://models.inference.ai.azure.com",
+    }
+    config["base_url"] = Prompt.ask(
+        "[green]API base URL[/green]",
+        default=base_url_defaults[config["model_provider"]],
+    )
 
     # ── Question 2: API key ───────────────────────────────────────────────────
     if preset_api_key:

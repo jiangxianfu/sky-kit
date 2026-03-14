@@ -2,7 +2,7 @@
 import json
 from datetime import datetime
 from pathlib import Path
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -28,7 +28,6 @@ MINIMAL_CONFIG: dict = {
     "mcp_servers": {},
     "skills": [],
     "create_soul": False,
-    "enable_scheduler": True,
 }
 
 
@@ -150,29 +149,29 @@ class TestWriteAndMkdirs:
 class TestReqTxt:
     def test_base_packages_present(self, tmp_path):
         gen = make_gen(tmp_path)
-        txt = gen._req_txt()
-        for pkg in ["openai", "anthropic", "rich", "pyyaml", "python-dotenv", "schedule"]:
+        txt = gen._pyproject_toml()
+        for pkg in ["openai", "anthropic", "rich", "pyyaml", "python-dotenv"]:
             assert pkg in txt
 
     def test_ends_with_newline(self, tmp_path):
         gen = make_gen(tmp_path)
-        assert gen._req_txt().endswith("\n")
+        assert gen._pyproject_toml().endswith("\n")
 
     def test_mcp_package_included_when_enabled(self, tmp_path):
         gen = make_gen(tmp_path, extra={"enable_mcp": True})
-        assert "mcp>=" in gen._req_txt()
+        assert "mcp>=" in gen._pyproject_toml()
 
     def test_mcp_package_absent_when_disabled(self, tmp_path):
         gen = make_gen(tmp_path)
-        assert "mcp>=" not in gen._req_txt()
+        assert "mcp>=" not in gen._pyproject_toml()
 
     def test_duckduckgo_included_for_web_search(self, tmp_path):
         gen = make_gen(tmp_path, extra={"skills": ["web_search"]})
-        assert "duckduckgo-search" in gen._req_txt()
+        assert "duckduckgo-search" in gen._pyproject_toml()
 
     def test_duckduckgo_absent_without_web_search(self, tmp_path):
         gen = make_gen(tmp_path, extra={"skills": ["file_manager"]})
-        assert "duckduckgo-search" not in gen._req_txt()
+        assert "duckduckgo-search" not in gen._pyproject_toml()
 
 
 # ---------------------------------------------------------------------------
@@ -256,8 +255,8 @@ class TestConfigYaml:
         gen = make_gen(tmp_path, extra={"enable_mcp": True})
         assert "enabled: true" in gen._config_yaml()
 
-    def test_scheduler_disabled_flag(self, tmp_path):
-        gen = make_gen(tmp_path, extra={"enable_scheduler": False})
+    def test_mcp_disabled_flag(self, tmp_path):
+        gen = make_gen(tmp_path, extra={"enable_mcp": False})
         assert "enabled: false" in gen._config_yaml()
 
     def test_contains_date(self, tmp_path):
@@ -345,7 +344,7 @@ class TestReadmeMd:
 
     def test_no_skills_shows_none(self, tmp_path):
         gen = make_gen(tmp_path, extra={"skills": []})
-        assert "none" in gen._readme_md()
+        assert "无" in gen._readme_md()
 
     def test_skills_listed(self, tmp_path):
         gen = make_gen(tmp_path, extra={"skills": ["web_search", "file_manager"]})
@@ -409,7 +408,7 @@ class TestAllSkills:
                 f"Missing template for skill: {skill}"
 
     def test_expected_skills_present(self):
-        expected = {"file_manager", "code_executor", "web_search", "scheduler_skill", "self_modifier"}
+        expected = {"file_manager", "code_executor", "web_search"}
         assert set(_ALL_SKILLS) == expected
 
 
@@ -428,11 +427,10 @@ class TestGenerate:
         assert (root / "core" / "config.py").exists()
         assert (root / "core" / "ai_client.py").exists()
         assert (root / "core" / "memory_manager.py").exists()
-        assert (root / "core" / "scheduler.py").exists()
         assert (root / "core" / "skill_manager.py").exists()
         assert (root / "core" / "bot.py").exists()
         assert (root / "skills" / "base_skill.py").exists()
-        assert (root / "requirements.txt").exists()
+        assert (root / "pyproject.toml").exists()
         assert (root / ".env").exists()
         assert (root / "config" / "config.yaml").exists()
         assert (root / "README.md").exists()
@@ -501,7 +499,7 @@ class TestGenerate:
         gen = make_gen(tmp_path, name="proj",
                        extra={"enable_mcp": True, "skills": ["web_search"]})
         gen.generate()
-        req = (tmp_path / "proj" / "requirements.txt").read_text()
+        req = (tmp_path / "proj" / "pyproject.toml").read_text()
         assert "openai" in req
         assert "mcp>=" in req
         assert "duckduckgo-search" in req

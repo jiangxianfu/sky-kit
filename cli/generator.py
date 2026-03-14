@@ -8,7 +8,7 @@ Complex files whose content depends on configuration are built as strings.
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 _TEMPLATE_DIR = Path(__file__).parent / "template"
 
@@ -230,7 +230,7 @@ class ProjectGenerator:
             "uv sync",
             "",
             "# 启动",
-            "python start.py",
+            "uv run start.py",
             "```",
             "",
             "## 配置",
@@ -269,6 +269,10 @@ class ProjectGenerator:
             "| 技能 | 说明 |",
             "|------|------|",
             skill_rows,
+            "",
+            "## MCP",
+            "",
+            f"状态: {mcp}",
             "",
             "### 添加自定义技能",
             "",

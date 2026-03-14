@@ -222,8 +222,7 @@ class TestWizard:
         config = self._run_wizard("bot", preset_model="openai", preset_key="k",
                                   prompt_returns=["gpt-4o-mini", ""])
         # Wizard always includes all default skills
-        for skill in ["file_manager", "code_executor", "web_search",
-                      "scheduler_skill", "self_modifier"]:
+        for skill in ["file_manager", "code_executor", "web_search"]:
             assert skill in config["skills"]
 
     def test_enable_mcp_default_false(self):

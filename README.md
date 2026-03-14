@@ -13,23 +13,14 @@
 git clone <本仓库地址>
 cd sky-kit
 
-# 2. 创建并激活虚拟环境（需要 Python 3.12+）
-py -3.12 -m venv .venv
+# 2. 安装所有依赖（含开发依赖，uv 会自动管理虚拟环境）
+uv sync --dev
 
-# Windows
-.venv\Scripts\activate
-# macOS / Linux
-source .venv/bin/activate
+# 3. 运行单元测试（验证环境）
+uv run pytest tests/ --cov=cli --cov-report=term-missing
 
-# 3. 安装开发依赖
-pip install -e .
-pip install pytest pytest-cov
-
-# 4. 运行单元测试（验证环境）
-pytest tests/ --cov=cli --cov-report=term-missing
-
-# 5. 使用 CLI 创建第一个机器人项目
-sky-kit init sky001
+# 4. 使用 CLI 创建第一个机器人项目
+uv run sky-kit init sky001
 ```
 
 ---
@@ -39,10 +30,10 @@ sky-kit init sky001
 ```bash
 git clone <本仓库地址>
 cd sky-kit
-pip install -e .
+uv sync
 ```
 
-安装完成后，`sky-kit` 命令即可全局使用。
+安装完成后，通过 `uv run sky-kit` 使用，或将 `.venv/Scripts`（Windows）/ `.venv/bin`（macOS/Linux）加入 `PATH` 后直接使用 `sky-kit`。
 
 ---
 
@@ -50,12 +41,12 @@ pip install -e .
 
 ```bash
 # 交互向导模式（推荐）
-sky-kit init sky001
+uv run sky-kit init sky001
 
 # 创建完成后运行机器人
 cd sky001
-pip install -r requirements.txt
-python start.py
+uv sync
+uv run start.py
 ```
 
 ---
@@ -82,12 +73,11 @@ python start.py
 
 ```
 sky001/
-├── start.py              ← 启动入口：python start.py
+├── start.py              ← 启动入口：uv run start.py
 ├── .meta/                ← 灵魂、记忆与身份（隐藏目录）
 │   ├── soul.md           ← 机器人身份文件（运行时自动创建并持续进化）
 │   └── memory/           ← 对话记忆，按 yyyy-MM-dd/[主题].md 存储
 ├── .env                  ← API 密钥（已加入 .gitignore）
-├── requirements.txt
 ├── config/
 │   └── config.yaml       ← 全部配置项
 ├── skills/               ← 技能插件目录
@@ -97,12 +87,11 @@ sky001/
 │   ├── web_search.py
 │   ├── scheduler_skill.py
 │   └── self_modifier.py
-└── core/                 ← 机器人核心框架（一般无需修改）
+└── core/                 ← 机器人核心框架
     ├── bot.py
     ├── config.py
     ├── ai_client.py
     ├── memory_manager.py
-    ├── scheduler.py
     └── skill_manager.py
 ```
 
