@@ -13,23 +13,14 @@
 git clone <本仓库地址>
 cd sky-kit
 
-# 2. 创建并激活虚拟环境（需要 Python 3.12+）
-py -3.12 -m venv .venv
+# 2. 安装依赖（uv 会自动创建虚拟环境并安装所有依赖，需要 Python 3.12+）
+uv sync
 
-# Windows
-.venv\Scripts\activate
-# macOS / Linux
-source .venv/bin/activate
+# 3. 运行单元测试（验证环境）
+uv run pytest tests/ --cov=cli --cov-report=term-missing
 
-# 3. 安装开发依赖
-pip install -e .
-pip install pytest pytest-cov
-
-# 4. 运行单元测试（验证环境）
-pytest tests/ --cov=cli --cov-report=term-missing
-
-# 5. 使用 CLI 创建第一个机器人项目
-sky-kit init sky001
+# 4. 使用 CLI 创建第一个机器人项目
+uv run sky-kit init sky001
 ```
 
 ---
@@ -39,10 +30,22 @@ sky-kit init sky001
 ```bash
 git clone <本仓库地址>
 cd sky-kit
-pip install -e .
+uv sync
 ```
 
-安装完成后，`sky-kit` 命令即可全局使用。
+安装完成后，可通过 `uv run sky-kit` 使用命令，或激活虚拟环境后直接使用 `sky-kit`：
+
+```bash
+# 方式一：通过 uv run 调用（推荐）
+uv run sky-kit init sky001
+
+# 方式二：激活虚拟环境后直接调用
+# Windows
+.venv\Scripts\activate
+# macOS / Linux
+source .venv/bin/activate
+sky-kit init sky001
+```
 
 ---
 
@@ -50,12 +53,12 @@ pip install -e .
 
 ```bash
 # 交互向导模式（推荐）
-sky-kit init sky001
+uv run sky-kit init sky001
 
 # 创建完成后运行机器人
 cd sky001
-pip install -r requirements.txt
-python start.py
+uv sync
+uv run python start.py
 ```
 
 ---
@@ -110,7 +113,7 @@ sky001/
 
 ## 首次运行
 
-首次执行 `python start.py` 时，如果 `.meta/soul.md` 不存在，机器人会自动询问：
+首次执行 `uv run python start.py` 时，如果 `.meta/soul.md` 不存在，机器人会自动询问：
 
 1. **你想叫我什么名字？** — 设置机器人名称
 2. **你希望我是一个怎样的伙伴？** — 设置性格与定位
@@ -156,7 +159,7 @@ sky001/
 - **github** — 通过 `@modelcontextprotocol/server-github` 访问 GitHub API
 - **sqlite** — 通过 `@modelcontextprotocol/server-sqlite` 操作本地数据库
 
-需要安装 Node.js（`npx`）并执行 `pip install mcp`。
+需要安装 Node.js（`npx`）并执行 `uv add mcp`。
 
 ---
 
@@ -205,7 +208,7 @@ ai:
 
 ## 环境要求
 
-- Python ≥ 3.9
+- [uv](https://docs.astral.sh/uv/) ≥ 0.4（Python 包管理器，会自动管理 Python 3.12+ 环境）
 - `click`、`rich`、`pyyaml`、`python-dotenv`、`schedule`
 - `openai`（用于 OpenAI / GitHub Copilot）
 - `anthropic`（用于 Claude）
